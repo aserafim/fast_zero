@@ -10,6 +10,9 @@ python = "3.12.*"
 fastapi = "^0.111.0"
 
 bs4 = "^0.0.2"
+sqlalchemy = "^2.0.31"
+pydantic-settings = "^2.3.4"
+alembic = "^1.13.1"
 [tool.ruff.lint]
 preview = true
 select = ['I', 'F', 'E', 'W', 'PL', 'PT']
