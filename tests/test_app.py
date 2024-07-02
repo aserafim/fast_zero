@@ -8,7 +8,7 @@ def test_read_root_deve_retornar_ok_e_ola_mundo(client):
     assert response.json() == {'mensagem': 'Olá, mundo!'}
 
 
-def test_creat_user(client):
+def test_create_user(client):
     response = client.post(
         '/users/',
         json={
