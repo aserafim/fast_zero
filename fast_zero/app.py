@@ -6,11 +6,9 @@ from sqlalchemy import select
 
 from fast_zero.database import get_session
 from fast_zero.models import User
-from fast_zero.schemas import Message, UserDB, UserList, UserPublic, UserSchema
+from fast_zero.schemas import Message, UserList, UserPublic, UserSchema
 
 app = FastAPI()
-
-database = []
 
 
 @app.get('/ola', status_code=HTTPStatus.OK, response_class=HTMLResponse)
@@ -70,60 +68,58 @@ def create_user(user: UserSchema, session=Depends(get_session)):
 
 
 @app.get('/users/', response_model=UserList)
-def read_users(session=Depends(get_session)):
+def read_users(limit: int = 10, skip=0, session=Depends(get_session)):
     """
     Endpoint que retorna a lista de usuários cadastrados.
     """
-    user = session.scalars(
-        select(User)
-    )
+    user = session.scalars(select(User).limit(limit).offset(skip))
     return {'users': user}
 
 
 @app.get('/users/{user_id}', response_model=UserPublic)
-def get_user(user_id: int):
+def get_user(user_id: int, session=Depends(get_session)):
     """
     Endpoint que recebe como parâmetro um número inteiro
     que representa o id do usuário e retorna esse usuário.
     """
-    if user_id < 1 or user_id > len(database):
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-        )
-
-    user_with_id = database[user_id - 1]
-
-    return user_with_id
 
 
 @app.put('/users/{user_id}', response_model=UserPublic)
-def update_user(user_id: int, user: UserSchema):
+def update_user(user_id: int, user: UserSchema, session=Depends(get_session)):
     """
     Endpoint que recebe como parâmetro um id correspondente
     a um usuário e atualiza os valores.
     """
-    if user_id < 1 or user_id > len(database):
+    db_user = session.scalar(select(User).where(User.id == user_id))
+
+    if not db_user:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.BAD_REQUEST, detail='User not found'
         )
 
-    user_with_id = UserDB(id=user_id, **user.model_dump())
+    db_user.username = user.username
+    db_user.email = user.email
+    db_user.password = user.password
 
-    database[user_id - 1] = user_with_id
+    session.commit()
+    session.refresh(db_user)
 
-    return user_with_id
+    return db_user
 
 
 @app.delete('/users/{user_id}', response_model=Message)
-def delete_user(user_id: int):
+def delete_user(user_id: int, session=Depends(get_session)):
     """
     Endpoint que recebe o id do usuário e remove-o do banco.
     """
-    if user_id < 1 or user_id > len(database):
+    db_user = session.scalar(select(User).where(User.id == user_id))
+
+    if not db_user:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.BAD_REQUEST, detail='User not found'
         )
 
-    del database[user_id - 1]
+    session.delete(db_user)
+    session.commit()
 
-    return {'message': 'Usuário removido'}
+    return {'message': 'User deleted'}
