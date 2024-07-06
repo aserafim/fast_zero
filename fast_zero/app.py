@@ -82,6 +82,14 @@ def get_user(user_id: int, session=Depends(get_session)):
     Endpoint que recebe como parâmetro um número inteiro
     que representa o id do usuário e retorna esse usuário.
     """
+    db_user = session.scalar(select(User).where(User.id == user_id))
+
+    if not db_user:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='User not found'
+        )
+
+    return db_user
 
 
 @app.put('/users/{user_id}', response_model=UserPublic)

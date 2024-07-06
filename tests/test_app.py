@@ -29,7 +29,18 @@ def test_create_user(client):
     }
 
 
-# def test_create_user_ja_existe(client, user)
+def test_create_user_ja_existe(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'User Teste',
+            'email': 'teste@teste.com',
+            'password': 'teste1pass',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {'detail': 'Usuário já existe'}
 
 
 def test_read_users(client):
@@ -70,13 +81,13 @@ def test_update_user(client, user):
     }
 
 
-def test_get_user(client):
+def test_get_user(client, user):
     response = client.get('/users/1')
 
     assert response.json() == {
         'id': 1,
-        'username': 'testusername2',
-        'email': 'test@test.com',
+        'username': 'User Teste',
+        'email': 'teste@teste.com',
     }
 
 
