@@ -3,6 +3,16 @@ from http import HTTPStatus
 from fast_zero.schemas import UserPublic
 
 
+def test_get_user(client, user):
+    response = client.get('/users/1')
+
+    assert response.json() == {
+        'id': 1,
+        'username': 'teste2',
+        'email': 'teste2@test.com',
+    }
+
+
 def test_create_user(client):
     response = client.post(
         '/users/',
@@ -26,8 +36,8 @@ def test_create_user_ja_existe(client, user):
     response = client.post(
         '/users/',
         json={
-            'username': 'User Teste',
-            'email': 'teste@teste.com',
+            'username': 'teste3',
+            'email': 'teste3@test.com',
             'password': 'teste1pass',
         },
     )
@@ -77,11 +87,11 @@ def test_update_user(client, user, token):
     }
 
 
-def test_update_wrong_user(client, user, token):
+def test_update_wrong_user(client, other_user, token):
     # import pdb
     # pdb.set_trace()
     response = client.put(
-        f'/users/{user.id + 1}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'password': 'teste2pass',
@@ -93,16 +103,6 @@ def test_update_wrong_user(client, user, token):
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {'detail': 'Not enough permissions'}
-
-
-def test_get_user(client, user):
-    response = client.get('/users/1')
-
-    assert response.json() == {
-        'id': 1,
-        'username': 'User Teste',
-        'email': 'test@test.com',
-    }
 
 
 def test_get_user_not_found(client):
@@ -139,9 +139,9 @@ def test_delete_user(client, user, token):
     assert response.json() == {'message': 'User deleted'}
 
 
-def test_delete_wrong_user(client, user, token):
+def test_delete_wrong_user(client, other_user, token):
     response = client.delete(
-        f'/users/{user.id + 1}', headers={'Authorization': f'Bearer {token}'}
+        f'/users/{other_user.id}', headers={'Authorization': f'Bearer {token}'}
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {'detail': 'Not enough permissions'}
